@@ -1,11 +1,5 @@
-"""
-Dataset class for diabetic retinopathy classification.
-Handles image loading and label retrieval for EyePACS/APTOS format.
-"""
-
-import os
 from pathlib import Path
-from typing import Optional, Callable, Tuple, Dict, Any
+from typing import Optional, Callable, Dict, Any
 
 import pandas as pd
 import numpy as np
@@ -15,16 +9,8 @@ from torch.utils.data import Dataset
 
 
 class DiabeticRetinopathyDataset(Dataset):
-    """Dataset for diabetic retinopathy fundus images."""
-    
     NUM_CLASSES = 5
-    CLASS_NAMES = [
-        "No DR",
-        "Mild NPDR", 
-        "Moderate NPDR",
-        "Severe NPDR",
-        "Proliferative DR"
-    ]
+    CLASS_NAMES = ["No DR", "Mild NPDR", "Moderate NPDR", "Severe NPDR", "Proliferative DR"]
     
     def __init__(
         self,
@@ -35,77 +21,44 @@ class DiabeticRetinopathyDataset(Dataset):
         transform: Optional[Callable] = None,
         tabular_features: Optional[list] = None,
     ):
-        """
-        Args:
-            csv_path: Path to CSV containing image paths and labels.
-            image_dir: Root directory for images.
-            image_col: Column name for image file paths.
-            label_col: Column name for diagnosis labels.
-            transform: Optional transform to apply to images.
-            tabular_features: Optional list of tabular feature columns.
-        """
         self.image_dir = Path(image_dir)
         self.transform = transform
         self.image_col = image_col
         self.label_col = label_col
         self.tabular_features = tabular_features or []
-        
         self.df = pd.read_csv(csv_path)
         self._validate_data()
         
-    def _validate_data(self) -> None:
-        """Validate required columns exist."""
+    def _validate_data(self):
         required_cols = [self.image_col, self.label_col]
         missing = [c for c in required_cols if c not in self.df.columns]
         if missing:
             raise ValueError(f"Missing required columns: {missing}")
-            
         for col in self.tabular_features:
             if col not in self.df.columns:
                 raise ValueError(f"Tabular feature column not found: {col}")
     
-    def __len__(self) -> int:
+    def __len__(self):
         return len(self.df)
     
     def __getitem__(self, idx: int) -> Dict[str, Any]:
         row = self.df.iloc[idx]
-        
-        # Load image
         image_path = self.image_dir / row[self.image_col]
         image = Image.open(image_path).convert("RGB")
         
         if self.transform:
             image = self.transform(image)
         
-        # Get label
         label = torch.tensor(row[self.label_col], dtype=torch.long)
+        sample = {"image": image, "label": label, "image_path": str(image_path)}
         
-        sample = {
-            "image": image,
-            "label": label,
-            "image_path": str(image_path),
-        }
-        
-        # Add tabular features if specified
         if self.tabular_features:
-            tabular = torch.tensor(
-                [row[f] for f in self.tabular_features],
-                dtype=torch.float32
-            )
+            tabular = torch.tensor([row[f] for f in self.tabular_features], dtype=torch.float32)
             sample["tabular"] = tabular
             
         return sample
     
     def get_class_weights(self, method: str = "inverse_frequency") -> torch.Tensor:
-        """
-        Compute class weights for handling imbalanced data.
-        
-        Args:
-            method: Either 'inverse_frequency' or 'effective_samples'.
-            
-        Returns:
-            Tensor of class weights.
-        """
         class_counts = self.df[self.label_col].value_counts().sort_index().values
         
         if method == "inverse_frequency":
@@ -122,35 +75,21 @@ class DiabeticRetinopathyDataset(Dataset):
         return torch.tensor(weights, dtype=torch.float32)
     
     def get_sample_weights(self) -> torch.Tensor:
-        """Get per-sample weights for WeightedRandomSampler."""
         class_weights = self.get_class_weights()
         labels = self.df[self.label_col].values
-        sample_weights = class_weights[labels]
-        return sample_weights
+        return class_weights[labels]
     
     @property
     def class_distribution(self) -> Dict[int, int]:
-        """Return class distribution as dictionary."""
         return self.df[self.label_col].value_counts().sort_index().to_dict()
 
 
 class InferenceDataset(Dataset):
-    """Dataset for inference without labels."""
-    
-    def __init__(
-        self,
-        image_paths: list,
-        transform: Optional[Callable] = None,
-    ):
-        """
-        Args:
-            image_paths: List of paths to images.
-            transform: Optional transform to apply.
-        """
+    def __init__(self, image_paths: list, transform: Optional[Callable] = None):
         self.image_paths = [Path(p) for p in image_paths]
         self.transform = transform
         
-    def __len__(self) -> int:
+    def __len__(self):
         return len(self.image_paths)
     
     def __getitem__(self, idx: int) -> Dict[str, Any]:
@@ -160,7 +99,4 @@ class InferenceDataset(Dataset):
         if self.transform:
             image = self.transform(image)
             
-        return {
-            "image": image,
-            "image_path": str(image_path),
-        }
+        return {"image": image, "image_path": str(image_path)}

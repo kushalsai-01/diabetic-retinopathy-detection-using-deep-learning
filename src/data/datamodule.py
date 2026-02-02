@@ -1,8 +1,3 @@
-"""
-PyTorch Lightning DataModule for diabetic retinopathy dataset.
-Handles data loading, splitting, and batching.
-"""
-
 from pathlib import Path
 from typing import Optional, Dict, Any
 
@@ -14,8 +9,6 @@ from .transforms import build_transforms
 
 
 class DRDataModule(pl.LightningDataModule):
-    """Lightning DataModule for DR classification."""
-    
     def __init__(
         self,
         data_dir: str,
@@ -30,20 +23,6 @@ class DRDataModule(pl.LightningDataModule):
         use_weighted_sampling: bool = True,
         config: Optional[Dict[str, Any]] = None,
     ):
-        """
-        Args:
-            data_dir: Root data directory containing CSVs and images.
-            train_csv: Training CSV filename.
-            val_csv: Validation CSV filename.
-            test_csv: Test CSV filename (optional).
-            image_col: Column name for image paths.
-            label_col: Column name for labels.
-            batch_size: Batch size for dataloaders.
-            num_workers: Number of data loading workers.
-            pin_memory: Pin memory for faster GPU transfer.
-            use_weighted_sampling: Use weighted random sampling for class imbalance.
-            config: Full configuration dictionary.
-        """
         super().__init__()
         self.data_dir = Path(data_dir)
         self.train_csv = train_csv
@@ -76,8 +55,6 @@ class DRDataModule(pl.LightningDataModule):
                 transform=train_transform,
             )
             
-            self.val_dataset = DiabeticRetinopathyDataset(
-                csv_path=self.data_dir / self.val_csv,
                 image_dir=self.data_dir,
                 image_col=self.image_col,
                 label_col=self.label_col,
@@ -151,7 +128,6 @@ class DRDataModule(pl.LightningDataModule):
 def create_datamodule(config: Dict[str, Any]) -> DRDataModule:
     """Factory function to create DataModule from config."""
     dataset_cfg = config.get("dataset", {})
-    training_cfg = config.get("training", {})
     
     return DRDataModule(
         data_dir=dataset_cfg.get("root_dir", "data/processed"),
