@@ -12,6 +12,8 @@ from sklearn.metrics import (
     cohen_kappa_score,
 )
 
+EPSILON = 1e-8
+
 
 def quadratic_weighted_kappa(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     return cohen_kappa_score(y_true, y_pred, weights="quadratic")
