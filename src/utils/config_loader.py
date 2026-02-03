@@ -1,9 +1,11 @@
 from pathlib import Path
 from typing import Dict, Any, Optional, Union
+from functools import lru_cache
 
 import yaml
 
 
+@lru_cache(maxsize=32)
 def load_yaml(path: Union[str, Path]) -> Dict[str, Any]:
     with open(path, "r") as f:
         return yaml.safe_load(f) or {}

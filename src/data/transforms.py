@@ -18,12 +18,6 @@ def get_train_transforms(
     transforms = [
         A.Resize(image_size, image_size),
         A.RandomCrop(crop_size, crop_size),
-        
-        # Geometric augmentations
-        A.HorizontalFlip(p=0.5 if aug_config.get("horizontal_flip", True) else 0),
-        A.VerticalFlip(p=0.5 if aug_config.get("vertical_flip", True) else 0),
-        A.Rotate(
-            limit=aug_config.get("rotation_limit", 180),
         A.HorizontalFlip(p=0.5 if aug_config.get("horizontal_flip", True) else 0),
         A.VerticalFlip(p=0.5 if aug_config.get("vertical_flip", True) else 0),
         A.Rotate(limit=aug_config.get("rotation_limit", 180), border_mode=0, p=0.7),
@@ -58,27 +52,16 @@ def get_train_transforms(
             )
         )
     
-    transforms.extend([A.Normalize(mean=mean, std=std), ToTensorV2()image_size: int = 512,
-    crop_size: int = 448,
-    mean: Tuple[float, ...] = (0.485, 0.456, 0.406),
-    std: Tuple[float, ...] = (0.229, 0.224, 0.225),
-) -> A.Compose:
-    """Get validation/test transform pipeline (no augmentation)."""
-    return A.Compose([
-        A.Resize(image_size, image_size),
-        A.CenterCrop(crop_size, crop_size),
-        A.Normalize(mean=mean, std=std),
-        ToTensorV2(),
-    ])
+    transforms.extend([A.Normalize(mean=mean, std=std), ToTensorV2()])
+    return A.Compose(transforms)
 
 
-def get_inference_transforms(
+def get_val_transforms(
     image_size: int = 512,
     crop_size: int = 448,
     mean: Tuple[float, ...] = (0.485, 0.456, 0.406),
     std: Tuple[float, ...] = (0.229, 0.224, 0.225),
 ) -> A.Compose:
-    """Alias for validation transforms, used during inference."""
     return A.Compose([
         A.Resize(image_size, image_size),
         A.CenterCrop(crop_size, crop_size),
@@ -126,3 +109,17 @@ class AlbumentationsWrapper:
 
 
 def build_transforms(config: Dict[str, Any], split: str) -> AlbumentationsWrapper:
+    preprocess_cfg = config.get("preprocessing", {})
+    image_size = preprocess_cfg.get("resize", 512)
+    crop_size = preprocess_cfg.get("crop_size", 448)
+    mean = tuple(preprocess_cfg.get("mean", [0.485, 0.456, 0.406]))
+    std = tuple(preprocess_cfg.get("std", [0.229, 0.224, 0.225]))
+    
+    if split == "train":
+        transform = get_train_transforms(image_size, crop_size, mean, std, config)
+    elif split in ["val", "test"]:
+        transform = get_val_transforms(image_size, crop_size, mean, std)
+    else:
+        transform = get_inference_transforms(image_size, crop_size, mean, std)
+        
+    return AlbumentationsWrapper(transform)
