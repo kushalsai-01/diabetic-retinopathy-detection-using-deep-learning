@@ -4,6 +4,9 @@ import torch
 import torch.nn as nn
 import timm
 
+DEFAULT_DROPOUT = 0.3
+DEFAULT_NUM_CLASSES = 5
+
 
 class EfficientNetClassifier(nn.Module):
     def __init__(

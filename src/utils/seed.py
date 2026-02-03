@@ -6,7 +6,10 @@ import numpy as np
 import torch
 
 
-def set_seed(seed: int = 42, deterministic: bool = True) -> None:
+RANDOM_SEED = 42
+
+
+def set_seed(seed: int = RANDOM_SEED, deterministic: bool = True) -> None:
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
