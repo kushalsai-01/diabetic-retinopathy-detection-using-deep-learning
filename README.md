@@ -23,7 +23,6 @@ Grades 2-4 constitute "referable DR" requiring specialist evaluation.
 **Primary backbone: EfficientNet-B3** (Optimized for production)
 
 EfficientNet was selected for several practical reasons:
-
 1. **Efficiency-accuracy trade-off**: Compound scaling provides better accuracy per FLOP than ResNet or VGG alternatives, critical for high-throughput screening
 2. **Transfer learning effectiveness**: ImageNet pretraining transfers well to fundus images despite the domain gap
 3. **Inference speed**: B3 variant processes images in ~15ms on a V100, enabling real-time screening applications
