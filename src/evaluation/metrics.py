@@ -13,6 +13,7 @@ from sklearn.metrics import (
 )
 
 EPSILON = 1e-8
+CLASS_NAMES = ["No DR", "Mild NPDR", "Moderate NPDR", "Severe NPDR", "Proliferative DR"]
 
 
 def quadratic_weighted_kappa(y_true: np.ndarray, y_pred: np.ndarray) -> float:
