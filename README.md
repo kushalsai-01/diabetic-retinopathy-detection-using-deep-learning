@@ -20,7 +20,7 @@ Grades 2-4 constitute "referable DR" requiring specialist evaluation.
 
 ## Model Architecture
 
-**Primary backbone: EfficientNet-B3**
+**Primary backbone: EfficientNet-B3** (Optimized for production)
 
 EfficientNet was selected for several practical reasons:
 
