@@ -60,7 +60,7 @@ def print_classification_report(
     class_names: Optional[list] = None,
 ) -> str:
     if class_names is None:
-        class_names = ["No DR", "Mild", "Moderate", "Severe", "Proliferative"]
+        class_names = CLASS_NAMES
         
     report = classification_report(y_true, y_pred, target_names=class_names, zero_division=0)
     kappa = quadratic_weighted_kappa(y_true, y_pred)
