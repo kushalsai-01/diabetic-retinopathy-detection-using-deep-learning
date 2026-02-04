@@ -12,31 +12,57 @@ def get_train_transforms(
     std: Tuple[float, ...] = (0.229, 0.224, 0.225),
     config: Optional[Dict[str, Any]] = None,
 ) -> A.Compose:
+    """Medical-optimized augmentations for fundus images.
+    
+    Uses conservative rotation (±15°) suitable for retinal imaging.
+    Includes CLAHE for contrast enhancement of retinal features.
+    """
     config = config or {}
     aug_config = config.get("augmentation", {}).get("train", {})
     
+    # Conservative rotation for medical images (default ±15° instead of ±180°)
+    rotation_limit = aug_config.get("rotation_limit", 15)
+    
     transforms = [
         A.Resize(image_size, image_size),
-        A.RandomCrop(crop_size, crop_size),
+        # Random crop with scale for mild zoom variation
+        A.RandomResizedCrop(
+            height=crop_size,
+            width=crop_size,
+            scale=(0.9, 1.0),
+            ratio=(0.95, 1.05),
+            p=1.0
+        ),
+        # Fundus images can be flipped
         A.HorizontalFlip(p=0.5 if aug_config.get("horizontal_flip", True) else 0),
         A.VerticalFlip(p=0.5 if aug_config.get("vertical_flip", True) else 0),
-        A.Rotate(limit=aug_config.get("rotation_limit", 180), border_mode=0, p=0.7),
+        # Conservative rotation - medically validated
+        A.Rotate(limit=rotation_limit, border_mode=0, p=0.7),
+        # Lighting variations from different cameras
         A.RandomBrightnessContrast(
-            brightness_limit=aug_config.get("brightness_limit", 0.2),
-            contrast_limit=aug_config.get("contrast_limit", 0.2),
-            p=0.5
+            brightness_limit=aug_config.get("brightness_limit", 0.15),
+            contrast_limit=aug_config.get("contrast_limit", 0.15),
+            p=0.6
         ),
+        # Color variations in fundus imaging
         A.HueSaturationValue(
-            hue_shift_limit=int(aug_config.get("hue_saturation_limit", 0.1) * 20),
-            sat_shift_limit=int(aug_config.get("hue_saturation_limit", 0.1) * 30),
-            val_shift_limit=int(aug_config.get("hue_saturation_limit", 0.1) * 20),
+            hue_shift_limit=int(aug_config.get("hue_saturation_limit", 0.08) * 20),
+            sat_shift_limit=int(aug_config.get("hue_saturation_limit", 0.08) * 30),
+            val_shift_limit=int(aug_config.get("hue_saturation_limit", 0.08) * 20),
             p=0.3
         ),
+        # CLAHE for retinal feature enhancement
+        A.CLAHE(
+            clip_limit=aug_config.get("clahe_clip_limit", 2.0),
+            tile_grid_size=(8, 8),
+            p=0.3
+        ),
+        # Blur for out-of-focus simulation
         A.OneOf([
             A.GaussianBlur(blur_limit=aug_config.get("blur_limit", 3)),
             A.MedianBlur(blur_limit=3),
         ], p=0.2),
-        A.GaussNoise(var_limit=(10.0, 50.0), p=0.2),
+        A.GaussNoise(var_limit=(10.0, 50.0), p=0.15),
     ]
     
     dropout_config = aug_config.get("coarse_dropout", {})

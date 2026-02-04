@@ -27,11 +27,12 @@ augmentation:
   train:
     horizontal_flip: true
     vertical_flip: true
-    rotation_limit: 180
-    brightness_limit: 0.2
-    contrast_limit: 0.2
-    hue_saturation_limit: 0.1
+    rotation_limit: 15          # ±15° (medically appropriate, changed from ±180°)
+    brightness_limit: 0.15      # Reduced for medical images
+    contrast_limit: 0.15        # Reduced for medical images
+    hue_saturation_limit: 0.08  # Reduced for fundus consistency
     blur_limit: 3
+    clahe_clip_limit: 2.0       # NEW: CLAHE for retinal feature enhancement
     coarse_dropout:
       enabled: true
       max_holes: 8
