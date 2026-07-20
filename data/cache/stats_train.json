@@ -1,0 +1,9 @@
+{
+    "input_dir": "data\\raw\\train",
+    "total_files": 2930,
+    "processed": 0,
+    "failed": 0,
+    "skipped": 2930,
+    "failures": {},
+    "timestamp": 1784521611.8939097
+}

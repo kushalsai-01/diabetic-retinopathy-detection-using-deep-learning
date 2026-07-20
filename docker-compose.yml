@@ -1,0 +1,48 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: dr_db
+      POSTGRES_USER: dr_user
+      POSTGRES_PASSWORD: dr_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dr_user -d dr_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://dr_user:dr_password@db:5432/dr_db
+      - DEVICE=cpu
+    volumes:
+      - ./model/checkpoints:/app/model/checkpoints:ro
+      - ./inference/heatmaps:/app/inference/heatmaps
+      - ./backend/uploads:/app/backend/uploads
+      - ./backend/reports:/app/backend/reports
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

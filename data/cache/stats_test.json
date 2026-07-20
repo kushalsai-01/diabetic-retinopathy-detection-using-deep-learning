@@ -1,0 +1,9 @@
+{
+    "input_dir": "data\\raw\\test",
+    "total_files": 366,
+    "processed": 0,
+    "failed": 0,
+    "skipped": 366,
+    "failures": {},
+    "timestamp": 1784521611.9445543
+}
